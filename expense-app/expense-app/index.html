@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Expenses</title>
+  <meta name="theme-color" content="#1f4e79">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Expenses">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn back" id="backBtn" hidden aria-label="Back">‹</button>
+    <h1 id="title">This Week</h1>
+  </header>
+
+  <main>
+    <!-- THIS WEEK -->
+    <section id="view-home" class="view">
+      <div id="fridayBanner" class="banner" hidden>
+        <strong>It's report day.</strong> Send this week's expenses.
+        <button class="btn small" data-go="send">Send week</button>
+      </div>
+      <div id="setupBanner" class="banner warn" hidden>
+        Add your name and work email first.
+        <button class="btn small" data-go="settings">Settings</button>
+      </div>
+
+      <div class="card summary">
+        <div class="muted" id="weekRange"></div>
+        <div class="big" id="weekTotal">$0.00</div>
+        <div class="muted" id="weekCount">No receipts yet</div>
+      </div>
+
+      <ul id="expenseList" class="list"></ul>
+      <p id="emptyHint" class="empty">Tap <b>Add Receipt</b> and take a photo of your receipt.</p>
+
+      <div class="actions sticky">
+        <button class="btn primary huge" id="addReceiptBtn">📷 Add Receipt</button>
+        <div class="row">
+          <button class="btn" id="fromGalleryBtn">🖼️ From photos</button>
+          <button class="btn" id="manualBtn">✏️ No receipt</button>
+          <button class="btn accent" data-go="send" id="sendBtn">📧 Send week</button>
+        </div>
+      </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+      <input type="file" id="galleryInput" accept="image/*" hidden>
+    </section>
+
+    <!-- REVIEW / EDIT -->
+    <section id="view-review" class="view" hidden>
+      <div class="photo-wrap" id="photoWrap">
+        <img id="photoPreview" alt="Receipt photo">
+        <button class="btn small retake" id="retakeBtn">Retake</button>
+      </div>
+      <div id="ocrStatus" class="ocr-status" hidden>
+        <div class="muted" id="ocrLabel">Reading receipt…</div>
+        <div class="progress"><div id="ocrBar"></div></div>
+      </div>
+      <p id="ocrNote" class="note" hidden>Check the details below and fix anything that's wrong.</p>
+
+      <form id="expenseForm" class="form" autocomplete="off">
+        <label>Total <span class="req">*</span>
+          <input name="total" inputmode="decimal" required placeholder="0.00">
+        </label>
+        <div class="row2">
+          <label>Date <input name="date" type="date" required></label>
+          <label>Category <select name="category"></select></label>
+        </div>
+        <label>Merchant <input name="merchant" placeholder="Store / restaurant name"></label>
+        <label>Purpose / description <input name="description" placeholder="e.g. Fuel for service truck, client lunch"></label>
+        <label>Paid with
+          <select name="payment">
+            <option>Company card</option>
+            <option>Personal card</option>
+            <option>Cash</option>
+          </select>
+        </label>
+        <div class="row3">
+          <label>Subtotal <input name="subtotal" inputmode="decimal" placeholder="—"></label>
+          <label>Tax <input name="tax" inputmode="decimal" placeholder="—"></label>
+          <label>Tip <input name="tip" inputmode="decimal" placeholder="—"></label>
+        </div>
+        <label>Notes <textarea name="notes" rows="2" placeholder="Job #, client, who attended…"></textarea></label>
+
+        <details id="ocrTextBox" hidden>
+          <summary>Scanned text</summary>
+          <pre id="ocrText"></pre>
+        </details>
+
+        <div class="actions">
+          <button class="btn primary huge" type="submit" id="saveBtn">Save</button>
+          <button class="btn danger" type="button" id="deleteBtn" hidden>Delete expense</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SEND -->
+    <section id="view-send" class="view" hidden>
+      <div class="card">
+        <div class="we" id="sendWE"></div>
+        <div class="muted" id="sendRange"></div>
+        <div class="big" id="sendTotal"></div>
+        <div class="muted" id="sendCount"></div>
+      </div>
+
+      <ol class="steps">
+        <li>Tap <b>Share to email</b> and pick <b>Outlook</b>. The Excel sheet and photos are attached for you.</li>
+        <li>Send it to <b id="sendTo">your work email</b>.</li>
+        <li>Come back and tap <b>Mark as sent</b>. That starts a new week.</li>
+      </ol>
+
+      <form class="form" id="weForm">
+        <label>Week ending (WE) date <input type="date" name="we" id="weInput"></label>
+      </form>
+      <div id="prepStatus" class="muted center">Preparing report…</div>
+      <div class="actions">
+        <button class="btn primary huge" id="shareBtn" disabled>📧 Share to email</button>
+        <button class="btn" id="downloadBtn" disabled>⬇️ Download files instead</button>
+        <button class="btn" id="copyEmailBtn" hidden>Copy my email address</button>
+        <button class="btn accent" id="markSentBtn">✅ Mark as sent</button>
+      </div>
+      <p class="muted small" id="fileList"></p>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="view-history" class="view" hidden>
+      <ul id="historyList" class="list"></ul>
+      <p id="historyEmpty" class="empty">No sent weeks yet.</p>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view" hidden>
+      <form id="settingsForm" class="form">
+        <label>Your name <input name="name" placeholder="First Last" autocomplete="name"></label>
+        <label>Work email (where your report goes) <input name="email" type="email" autocomplete="email" placeholder="you@company.com"></label>
+        <div class="row2">
+          <label>Week ends (WE) on
+            <select name="weekEndDay">
+              <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option>
+              <option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </label>
+          <label>Send report on
+            <select name="reportDay">
+              <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option>
+              <option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </label>
+        </div>
+        <label>Usually paid with
+          <select name="defaultPayment">
+            <option>Company card</option><option>Personal card</option><option>Cash</option>
+          </select>
+        </label>
+        <label>Categories (one per line)
+          <textarea name="categories" rows="7"></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn primary" type="submit">Save settings</button>
+        </div>
+      </form>
+
+      <h2>Backup</h2>
+      <p class="muted small">Your expenses are stored only on this phone. Make a backup before you change phones or clear browser data.</p>
+      <div class="actions">
+        <button class="btn" id="backupBtn">⬇️ Download backup</button>
+        <button class="btn" id="restoreBtn">⬆️ Restore from backup</button>
+        <input type="file" id="restoreInput" accept=".json,application/json" hidden>
+      </div>
+      <p class="muted small" id="storageInfo"></p>
+      <p class="muted small">Expense App · works offline · nothing leaves your phone until you send it.</p>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-go="home" class="active">🧾<span>This Week</span></button>
+    <button data-go="history">🗂️<span>History</span></button>
+    <button data-go="settings">⚙️<span>Settings</span></button>
+  </nav>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="vendor/tesseract.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
